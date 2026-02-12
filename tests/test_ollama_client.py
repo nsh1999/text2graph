@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 from typing import Iterator
 import pytest
 
-from ollama_client import (
+from modules.ollama_client import (
     OllamaClient,
     OllamaMessage,
     OllamaResponse,
@@ -337,7 +337,7 @@ class TestOllamaClient:
 class TestChatFunction:
     """Tests for the chat convenience function."""
 
-    @patch("ollama_client.OllamaClient")
+    @patch("modules.ollama_client.OllamaClient")
     def test_chat_function(self, mock_client_class: MagicMock) -> None:
         """Test the chat function."""
         mock_client = MagicMock()
@@ -353,7 +353,7 @@ class TestChatFunction:
         assert result == "Hello!"
         mock_client.chat.assert_called_once()
 
-    @patch("ollama_client.OllamaClient")
+    @patch("modules.ollama_client.OllamaClient")
     def test_chat_function_with_host(self, mock_client_class: MagicMock) -> None:
         """Test the chat function with custom host."""
         mock_client = MagicMock()

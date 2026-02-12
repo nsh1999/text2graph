@@ -1,4 +1,4 @@
-from db import PostgreSQLConnection
+from modules.db import PostgreSQLConnection
 
 
 def main():
