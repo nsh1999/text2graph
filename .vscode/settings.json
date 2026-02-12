@@ -3,7 +3,9 @@
         "closeall",
         "dotenv",
         "getconn",
+        "modelfile",
         "mydb",
+        "Ollama",
         "putconn",
         "testdb",
         "testpass"
