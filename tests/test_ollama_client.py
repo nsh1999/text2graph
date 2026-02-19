@@ -3,15 +3,23 @@
 from unittest.mock import patch, MagicMock
 from typing import Iterator
 import pytest
+from pydantic import BaseModel
 
-from modules.ollama_client import (
+from text2graph.modules import (
     OllamaClient,
     OllamaMessage,
     OllamaResponse,
     OllamaGenerateResponse,
     OllamaError,
+    ChatResult,
     chat,
 )
+
+
+class SampleOutputModel(BaseModel):
+    """Test pydantic model for output parsing."""
+    name: str
+    age: int
 
 
 class TestOllamaMessage:
@@ -134,12 +142,50 @@ class TestOllamaClient:
         }
 
         client = OllamaClient()
-        messages = [OllamaMessage(role="user", content="Hi")]
+        messages = [{"role": "user", "content": "Hi"}]
         response = client.chat(messages=messages, model="llama3")
 
-        assert isinstance(response, OllamaResponse)
-        assert response.message.content == "Hello!"
+        assert isinstance(response, ChatResult)
+        assert response.content == "Hello!"
+        assert response.parsed_data is None
         mock_chat.assert_called_once()
+
+    @patch("ollama.chat")
+    def test_chat_with_output_model(self, mock_chat: MagicMock) -> None:
+        """Test chat method with output_model for JSON parsing."""
+        mock_chat.return_value = {
+            "model": "llama3",
+            "created_at": "2024-01-01T00:00:00.000Z",
+            "message": {"role": "assistant", "content": '{"name": "John", "age": 30}'},
+            "done": True,
+        }
+
+        client = OllamaClient()
+        messages = [{"role": "user", "content": "Return JSON"}]
+        response = client.chat(messages=messages, model="llama3", output_model=SampleOutputModel)
+
+        assert isinstance(response, ChatResult)
+        assert response.content == '{"name": "John", "age": 30}'
+        assert isinstance(response.parsed_data, SampleOutputModel)
+        assert response.parsed_data.name == "John"
+        assert response.parsed_data.age == 30
+        mock_chat.assert_called_once()
+
+    @patch("ollama.chat")
+    def test_chat_with_output_model_error(self, mock_chat: MagicMock) -> None:
+        """Test chat method with output_model raises error on invalid JSON."""
+        mock_chat.return_value = {
+            "model": "llama3",
+            "created_at": "2024-01-01T00:00:00.000Z",
+            "message": {"role": "assistant", "content": "Invalid JSON"},
+            "done": True,
+        }
+
+        client = OllamaClient()
+        messages = [{"role": "user", "content": "Return JSON"}]
+
+        with pytest.raises(OllamaError, match="Failed to parse response as JSON"):
+            client.chat(messages=messages, model="llama3", output_model=SampleOutputModel)
 
     @patch("ollama.chat")
     def test_chat_stream(self, mock_chat: MagicMock) -> None:
@@ -159,7 +205,7 @@ class TestOllamaClient:
         mock_chat.return_value = [mock_chunk1, mock_chunk2]
 
         client = OllamaClient()
-        messages = [OllamaMessage(role="user", content="Hi")]
+        messages = [{"role": "user", "content": "Hi"}]
         response = client.chat(messages=messages, model="llama3", stream=True)
 
         assert isinstance(response, Iterator)
@@ -168,16 +214,13 @@ class TestOllamaClient:
         assert chunks[0].message.content == "Hello"
         assert chunks[1].message.content == "!"
 
-    @patch("ollama.chat")
-    def test_chat_error(self, mock_chat: MagicMock) -> None:
-        """Test chat raises OllamaError on failure."""
-        mock_chat.side_effect = Exception("API error")
-
+    def test_chat_stream_with_output_model_error(self) -> None:
+        """Test chat method raises ValueError for stream with output_model."""
         client = OllamaClient()
-        messages = [OllamaMessage(role="user", content="Hi")]
+        messages = [{"role": "user", "content": "Hi"}]
 
-        with pytest.raises(OllamaError, match="Chat request failed"):
-            client.chat(messages=messages, model="llama3")
+        with pytest.raises(ValueError, match="Cannot use output_model with streaming"):
+            client.chat(messages=messages, model="llama3", stream=True, output_model=SampleOutputModel)
 
     @patch("ollama.generate")
     def test_generate(self, mock_generate: MagicMock) -> None:
@@ -337,34 +380,40 @@ class TestOllamaClient:
 class TestChatFunction:
     """Tests for the chat convenience function."""
 
-    @patch("modules.ollama_client.OllamaClient")
+    @patch("text2graph.modules.ollama_client.OllamaClient")
     def test_chat_function(self, mock_client_class: MagicMock) -> None:
         """Test the chat function."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
 
-        mock_response = MagicMock()
-        mock_response.message.content = "Hello!"
+        mock_response = ChatResult(
+            content="Hello!",
+            parsed_data=None
+        )
         mock_client.chat.return_value = mock_response
 
         messages = [{"role": "user", "content": "Hi"}]
         result = chat(messages=messages, model="llama3")
 
-        assert result == "Hello!"
+        assert isinstance(result, ChatResult)
+        assert result.content == "Hello!"
         mock_client.chat.assert_called_once()
 
-    @patch("modules.ollama_client.OllamaClient")
+    @patch("text2graph.modules.ollama_client.OllamaClient")
     def test_chat_function_with_host(self, mock_client_class: MagicMock) -> None:
         """Test the chat function with custom host."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
 
-        mock_response = MagicMock()
-        mock_response.message.content = "Hello!"
+        mock_response = ChatResult(
+            content="Hello!",
+            parsed_data=None
+        )
         mock_client.chat.return_value = mock_response
 
         messages = [{"role": "user", "content": "Hi"}]
         result = chat(messages=messages, host="http://localhost:11435")
 
-        assert result == "Hello!"
+        assert isinstance(result, ChatResult)
+        assert result.content == "Hello!"
         mock_client_class.assert_called_once_with(host="http://localhost:11435")

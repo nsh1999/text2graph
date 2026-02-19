@@ -4,14 +4,14 @@ import os
 from unittest.mock import patch, MagicMock
 import pytest
 
-from modules.db import PostgreSQLConnection
+from text2graph.modules import PostgreSQLConnection
 
 
 class TestPostgreSQLConnection:
     """Tests for PostgreSQLConnection class."""
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_init_with_env_vars(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test initialization with environment variables."""
@@ -27,8 +27,8 @@ class TestPostgreSQLConnection:
         assert db.port == 5432  # default
         mock_pool_class.assert_called_once()
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "db.example.com", "DB_NAME": "mydb", "DB_USER": "admin", "DB_PASSWORD": "secret"}, clear=True)
     def test_init_with_explicit_params(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test initialization with explicit parameters."""
@@ -55,8 +55,8 @@ class TestPostgreSQLConnection:
             database="mydb", user="admin", password="secret"
         )
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost"}, clear=True)
     def test_init_missing_required_fields(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test initialization raises error when required fields are missing."""
@@ -71,8 +71,8 @@ class TestPostgreSQLConnection:
         with pytest.raises(ValueError, match="Database name and user are required"):
             PostgreSQLConnection(host="localhost", database="testdb")
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_get_connection_context_manager(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test get_connection context manager."""
@@ -90,8 +90,8 @@ class TestPostgreSQLConnection:
         mock_conn.commit.assert_called_once()
         mock_pool.putconn.assert_called_once_with(mock_conn)
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_get_connection_rollback_on_error(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test rollback on exception in context manager."""
@@ -110,8 +110,8 @@ class TestPostgreSQLConnection:
         mock_conn.rollback.assert_called_once()
         mock_pool.putconn.assert_called_once_with(mock_conn)
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_execute_query(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test execute_query method."""
@@ -139,8 +139,8 @@ class TestPostgreSQLConnection:
         assert results[0]["id"] == 1
         mock_cursor.execute.assert_called_once_with("SELECT * FROM items WHERE id = %s", (1,))
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_execute_scalar(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test execute_scalar method."""
@@ -163,8 +163,8 @@ class TestPostgreSQLConnection:
         assert result == 42
         mock_cursor.fetchone.assert_called_once()
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_execute_scalar_no_result(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test execute_scalar returns None when no result."""
@@ -186,8 +186,8 @@ class TestPostgreSQLConnection:
 
         assert result is None
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_execute_update(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test execute_update method."""
@@ -213,8 +213,8 @@ class TestPostgreSQLConnection:
         assert rows_affected == 3
         mock_cursor.execute.assert_called_once()
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_bulk_insert(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test bulk_insert method."""
@@ -240,8 +240,8 @@ class TestPostgreSQLConnection:
         assert rows_inserted == 2
         assert mock_cursor.execute.call_count == 2
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_bulk_insert_empty_list(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test bulk_insert with empty list returns 0."""
@@ -260,8 +260,8 @@ class TestPostgreSQLConnection:
         assert rows_inserted == 0
         mock_cursor.execute.assert_not_called()
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_table_exists(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test table_exists method."""
@@ -284,8 +284,8 @@ class TestPostgreSQLConnection:
         assert exists is True
         mock_cursor.execute.assert_called_once()
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_table_exists_false(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test table_exists returns False when table doesn't exist."""
@@ -307,8 +307,8 @@ class TestPostgreSQLConnection:
 
         assert exists is False
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_close(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test close method."""
@@ -323,8 +323,8 @@ class TestPostgreSQLConnection:
         mock_pool.closeall.assert_called_once()
         assert db.pool is None
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_context_manager(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test PostgreSQLConnection as context manager."""
@@ -336,15 +336,15 @@ class TestPostgreSQLConnection:
 
         mock_pool.closeall.assert_called_once()
 
-    @patch("modules.db.load_dotenv")
-    @patch("modules.db.SimpleConnectionPool")
+    @patch("text2graph.modules.db.load_dotenv")
+    @patch("text2graph.modules.db.SimpleConnectionPool")
     @patch.dict(os.environ, {"DB_HOST": "localhost", "DB_NAME": "testdb", "DB_USER": "testuser", "DB_PASSWORD": "testpass"}, clear=True)
     def test_singleton_get_db(self, mock_pool_class: MagicMock, mock_load_dotenv: MagicMock) -> None:
         """Test get_db singleton pattern."""
         mock_pool = MagicMock()
         mock_pool_class.return_value = mock_pool
 
-        from modules.db import _db_instance, get_db
+        from text2graph.modules.db import _db_instance, get_db
 
         # Reset singleton
         _db_instance = None
